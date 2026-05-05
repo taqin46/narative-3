@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LKPD — Narrative Text | Kuis Interaktif</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #fdf6e3;
+    --cream: #f5ead0;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --rust: #b5451b;
+    --sage: #3d6b4f;
+    --sage-light: #d4e6da;
+    --muted: #7a6e5f;
+    --border: #d4c4a0;
+    --correct: #3d6b4f;
+    --wrong: #b5451b;
+    --shadow: 0 4px 24px rgba(26,26,46,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* NOISE TEXTURE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 56px 24px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--rust), var(--gold), var(--sage));
+  }
+  .header-tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold-light);
+    border: 1px solid var(--gold);
+    padding: 4px 14px; border-radius: 2px;
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  header h1 span { color: var(--gold-light); }
+  header p {
+    font-size: 15px; color: #b0a89a; max-width: 480px; margin: 0 auto;
+    font-weight: 300; line-height: 1.6;
+  }
+
+  /* STUDENT INFO FORM */
+  .student-card {
+    max-width: 760px; margin: 40px auto 0;
+    background: white; border-radius: 8px;
+    border: 1.5px solid var(--border);
+    padding: 32px 36px; box-shadow: var(--shadow);
+    position: relative;
+  }
+  .student-card h2 {
+    font-family: 'Playfair Display', serif; font-size: 1.1rem;
+    margin-bottom: 24px; color: var(--ink);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .student-card h2::before {
+    content: '✦'; color: var(--gold); font-size: 14px;
+  }
+  .form-row {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 16px;
+  }
+  .form-row.single { grid-template-columns: 1fr; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 6px; font-family: 'DM Mono', monospace;
+  }
+  .field input {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border); border-radius: 4px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink);
+    background: var(--paper); outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: var(--gold); background: white; }
+
+  /* SECTION WRAPPER */
+  .section {
+    max-width: 760px; margin: 32px auto;
+    background: white; border-radius: 8px;
+    border: 1.5px solid var(--border);
+    overflow: hidden; box-shadow: var(--shadow);
+  }
+  .section-header {
+    padding: 20px 36px;
+    border-bottom: 1.5px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .section-badge {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 12px; border-radius: 2px; font-weight: 500;
+  }
+  .badge-a { background: var(--ink); color: var(--gold-light); }
+  .badge-b { background: var(--rust); color: var(--paper); }
+  .badge-r { background: var(--sage); color: var(--paper); }
+  .section-title {
+    font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700;
+  }
+  .section-body { padding: 28px 36px; }
+
+  /* INSTRUCTION BOX */
+  .instruction {
+    background: var(--cream); border-left: 3px solid var(--gold);
+    padding: 12px 16px; border-radius: 0 4px 4px 0;
+    font-size: 14px; color: var(--muted); margin-bottom: 28px;
+    font-style: italic; line-height: 1.6;
+  }
+
+  /* QUIZ A — IDENTIFY */
+  .quiz-item {
+    margin-bottom: 24px; padding-bottom: 24px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .quiz-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .quiz-number {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--gold); font-weight: 500; letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .quiz-text {
+    font-style: italic; font-size: 15px; line-height: 1.7;
+    color: var(--ink); margin-bottom: 14px;
+    padding: 10px 14px; background: var(--paper); border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .options-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  }
+  .option-btn {
+    padding: 8px 14px; border-radius: 4px;
+    border: 1.5px solid var(--border); background: white;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    color: var(--ink); cursor: pointer; transition: all 0.15s;
+    text-align: left;
+  }
+  .option-btn:hover { border-color: var(--gold); background: var(--cream); }
+  .option-btn.selected { border-color: var(--ink); background: var(--ink); color: white; }
+  .option-btn.correct { border-color: var(--correct); background: var(--sage-light); color: var(--correct); font-weight: 600; }
+  .option-btn.wrong { border-color: var(--wrong); background: #fde8e0; color: var(--wrong); }
+
+  /* QUIZ B — MULTIPLE CHOICE */
+  .mc-item {
+    margin-bottom: 26px; padding-bottom: 26px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .mc-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .mc-question {
+    font-size: 15px; line-height: 1.65; margin-bottom: 14px; color: var(--ink);
+  }
+  .mc-question em {
+    background: var(--cream); padding: 2px 6px; border-radius: 3px;
+    font-style: normal; font-weight: 500; color: var(--rust);
+  }
+  .mc-options { display: flex; flex-direction: column; gap: 8px; }
+  .mc-btn {
+    padding: 9px 16px; border-radius: 4px;
+    border: 1.5px solid var(--border); background: white;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
+    cursor: pointer; transition: all 0.15s; text-align: left;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .mc-btn .letter {
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--border); flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .mc-btn:hover { border-color: var(--gold); background: var(--cream); }
+  .mc-btn:hover .letter { border-color: var(--gold); background: var(--gold-light); }
+  .mc-btn.selected { border-color: var(--ink); background: var(--ink); color: white; }
+  .mc-btn.selected .letter { border-color: white; background: white; color: var(--ink); }
+  .mc-btn.correct { border-color: var(--correct); background: var(--sage-light); color: var(--correct); }
+  .mc-btn.correct .letter { border-color: var(--correct); background: var(--correct); color: white; }
+  .mc-btn.wrong { border-color: var(--wrong); background: #fde8e0; color: var(--wrong); }
+  .mc-btn.wrong .letter { border-color: var(--wrong); background: var(--wrong); color: white; }
+
+  /* SECTION III — REFLECTION */
+  .reflect-item { margin-bottom: 24px; }
+  .reflect-q {
+    font-size: 14px; font-weight: 500; margin-bottom: 8px; line-height: 1.55;
+    color: var(--ink);
+  }
+  .reflect-q span { color: var(--rust); font-weight: 600; }
+  textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+    border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--ink); background: var(--paper); resize: vertical;
+    min-height: 72px; outline: none; transition: border-color 0.2s; line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--gold); background: white; }
+
+  /* STAR RATING */
+  .star-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .star-btn {
+    font-size: 24px; cursor: pointer; transition: transform 0.15s;
+    background: none; border: none; padding: 4px; line-height: 1;
+    color: var(--border);
+  }
+  .star-btn.active { color: var(--gold); transform: scale(1.2); }
+  .star-label { font-size: 12px; color: var(--muted); font-style: italic; }
+
+  /* SUBMIT ZONE */
+  .submit-zone {
+    max-width: 760px; margin: 32px auto 60px;
+    text-align: center;
+  }
+
+  /* FORMSPREE CONFIG */
+  .formspree-config {
+    background: var(--ink); color: var(--paper);
+    border-radius: 8px; padding: 24px 32px; margin-bottom: 20px;
+    text-align: left; border: 1.5px solid var(--gold);
+  }
+  .formspree-config h3 {
+    font-family: 'Playfair Display', serif; font-size: 1rem;
+    margin-bottom: 6px; color: var(--gold-light);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .formspree-config h3::before { content: '⚙'; }
+  .formspree-config p { font-size: 13px; color: #b0a89a; margin-bottom: 16px; line-height: 1.6; }
+  .formspree-field label {
+    display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--gold-light); margin-bottom: 5px; font-family: 'DM Mono', monospace;
+  }
+  .formspree-field input {
+    width: 100%; padding: 10px 14px; border-radius: 4px;
+    border: 1px solid #3a3a5c; background: #0f0f22; color: white;
+    font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .formspree-field input:focus { border-color: var(--gold); }
+  .config-note {
+    font-size: 11px; color: #888; font-style: italic; margin-top: 14px;
+    padding: 10px 14px; background: rgba(255,255,255,0.05); border-radius: 4px;
+    line-height: 1.7;
+  }
+  .config-note a { color: var(--gold-light); }
+
+  /* SUBMIT BUTTON */
+  .submit-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 48px; border-radius: 4px;
+    background: var(--ink); color: var(--paper);
+    font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700;
+    border: 2px solid var(--gold); cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .submit-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* STATUS MESSAGES */
+  .status-msg {
+    margin-top: 20px; padding: 14px 20px; border-radius: 6px;
+    font-size: 14px; font-weight: 500; display: none;
+  }
+  .status-msg.success { background: var(--sage-light); color: var(--sage); border: 1px solid var(--sage); display: block; }
+  .status-msg.error { background: #fde8e0; color: var(--rust); border: 1px solid var(--rust); display: block; }
+  .status-msg.info { background: var(--cream); color: var(--muted); border: 1px solid var(--border); display: block; }
+
+  /* SCORE BADGE */
+  .score-display {
+    display: none; margin-top: 24px;
+    background: var(--ink); color: var(--paper);
+    border-radius: 8px; padding: 24px 32px;
+    border: 2px solid var(--gold);
+  }
+  .score-display.visible { display: block; }
+  .score-display h3 {
+    font-family: 'Playfair Display', serif; font-size: 1.2rem;
+    color: var(--gold-light); margin-bottom: 6px;
+  }
+  .score-number {
+    font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 900;
+    color: var(--gold); line-height: 1;
+  }
+  .score-number span { font-size: 1.2rem; color: #b0a89a; }
+  .score-detail { font-size: 13px; color: #b0a89a; margin-top: 8px; }
+
+  @media (max-width: 600px) {
+    .form-row, .config-row { grid-template-columns: 1fr; }
+    .options-grid { grid-template-columns: 1fr 1fr; }
+    .student-card, .section-body { padding: 20px; }
+    .section-header { padding: 16px 20px; }
+    .submit-zone { margin: 24px 16px 48px; }
+    .email-config { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">Bahasa Inggris · Kelas X</div>
+  <h1>LKPD — <span>Narrative Text</span></h1>
+  <p>Lembar Kerja Peserta Didik Interaktif · Kuis & Refleksi</p>
+</header>
+
+<!-- STUDENT INFO -->
+<div class="student-card">
+  <h2>Identitas Peserta Didik</h2>
+  <div class="form-row">
+    <div class="field">
+      <label>Nama Lengkap</label>
+      <input type="text" id="student-name" placeholder="Masukkan nama kamu...">
+    </div>
+    <div class="field">
+      <label>Kelas</label>
+      <input type="text" id="student-class" placeholder="Contoh: X IPA 1">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="field">
+      <label>Hari / Tanggal</label>
+      <input type="text" id="student-date" placeholder="Contoh: Selasa, 6 Mei 2025">
+    </div>
+    <div class="field">
+      <label>Guru Pengampu</label>
+      <input type="text" id="student-teacher" placeholder="Nama guru...">
+    </div>
+  </div>
+</div>
+
+<!-- SECTION A -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-badge badge-a">Kuis A</span>
+    <span class="section-title">Mengenali Bagian Teks Naratif</span>
+  </div>
+  <div class="section-body">
+    <div class="instruction">
+      Petunjuk: Bacalah potongan teks di bawah ini dengan seksama. Tentukan apakah termasuk bagian <strong>Orientation</strong>, <strong>Complication</strong>, <strong>Resolution</strong>, atau <strong>Coda</strong>.
+    </div>
+
+    <div id="quiz-a-container"></div>
+  </div>
+</div>
+
+<!-- SECTION B -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-badge badge-b">Kuis B</span>
+    <span class="section-title">Pilihan Ganda — Keterangan Waktu</span>
+  </div>
+  <div class="section-body">
+    <div class="instruction">
+      Petunjuk: Pilihlah keterangan waktu yang paling tepat untuk setiap kalimat atau konteks berikut.
+    </div>
+
+    <div id="quiz-b-container"></div>
+  </div>
+</div>
+
+<!-- SECTION C — REFLECTION -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-badge badge-r">Refleksi</span>
+    <span class="section-title">Perjalanan Belajarmu</span>
+  </div>
+  <div class="section-body">
+    <div class="instruction">
+      Petunjuk: Jawablah pertanyaan berikut secara jujur untuk meninjau pemahamanmu hari ini.
+    </div>
+
+    <div class="reflect-item">
+      <div class="reflect-q"><span>1.</span> What new things did you learn today about Narrative Text and its structure?</div>
+      <textarea id="reflect-1" placeholder="Tulis jawabanmu di sini..."></textarea>
+    </div>
+    <div class="reflect-item">
+      <div class="reflect-q"><span>2.</span> Among Orientation, Complication, Resolution, and Coda, which part do you think is the most challenging to identify? Why?</div>
+      <textarea id="reflect-2" placeholder="Tulis jawabanmu di sini..."></textarea>
+    </div>
+    <div class="reflect-item">
+      <div class="reflect-q"><span>3.</span> How do adverbs of time (like "suddenly" or "finally") help you understand the story?</div>
+      <textarea id="reflect-3" placeholder="Tulis jawabanmu di sini..."></textarea>
+    </div>
+    <div class="reflect-item">
+      <div class="reflect-q"><span>4.</span> Write ONE original opening sentence (Orientation) of a story using Simple Past Tense!</div>
+      <textarea id="reflect-4" placeholder="Once upon a time, ..."></textarea>
+    </div>
+    <div class="reflect-item">
+      <div class="reflect-q"><span>5.</span> How confident do you feel about identifying the parts of a narrative text now?</div>
+      <div class="star-row">
+        <button class="star-btn" data-star="1" onclick="setStar(1)">★</button>
+        <button class="star-btn" data-star="2" onclick="setStar(2)">★</button>
+        <button class="star-btn" data-star="3" onclick="setStar(3)">★</button>
+        <button class="star-btn" data-star="4" onclick="setStar(4)">★</button>
+        <button class="star-btn" data-star="5" onclick="setStar(5)">★</button>
+        <span class="star-label" id="star-label">Pilih bintang...</span>
+      </div>
+    </div>
+    <div class="reflect-item">
+      <div class="reflect-q"><span>6.</span> What would you like to learn more about in the next lesson?</div>
+      <textarea id="reflect-6" placeholder="Tulis jawabanmu di sini..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT ZONE -->
+<div class="submit-zone">
+
+  <!-- Formspree Config Panel -->
+  <div class="formspree-config">
+    <h3>Konfigurasi Formspree (untuk Guru)</h3>
+    <p>Daftar di <a href="https://formspree.io" target="_blank">formspree.io</a> → buat form baru → copy <strong>Form ID</strong> (8 karakter, contoh: <code>xpwzgkla</code>) dan tempel di bawah ini.</p>
+    <div class="formspree-field">
+      <label>Formspree Form ID</label>
+      <input type="text" id="formspree-id" placeholder="Contoh: xpwzgkla" maxlength="20">
+    </div>
+    <div class="config-note">
+      📌 <strong>Cara setup (2 menit):</strong><br>
+      1. Buka <a href="https://formspree.io/register" target="_blank">formspree.io/register</a> → daftar gratis<br>
+      2. Klik <strong>+ New Form</strong> → masukkan email guru sebagai tujuan<br>
+      3. Copy Form ID (bagian akhir URL, contoh: <code>formspree.io/f/<u>xpwzgkla</u></code>)<br>
+      4. Tempel di kolom di atas → simpan file HTML ini → upload ke GitHub<br>
+      5. Setiap siswa submit, hasil langsung masuk ke email guru ✉
+    </div>
+  </div>
+
+  <button class="submit-btn" onclick="submitQuiz()">
+    <span>✦</span> Kirim Hasil Kuis
+  </button>
+
+  <div class="score-display" id="score-display">
+    <h3>Hasil Kuis Kamu</h3>
+    <div class="score-number" id="score-number">—<span>/15</span></div>
+    <div class="score-detail" id="score-detail"></div>
+  </div>
+
+  <div class="status-msg" id="status-msg"></div>
+</div>
+
+<script>
+// =============================================
+// DATA KUIS
+// =============================================
+const quizAData = [
+  {
+    text: "Once upon a time, there lived a beautiful girl named Cinderella with her stepmother and two wicked stepsisters.",
+    answer: "Orientation"
+  },
+  {
+    text: "Suddenly, the wolf disguised as the grandmother jumped out of bed and tried to catch Little Red Riding Hood.",
+    answer: "Complication"
+  },
+  {
+    text: "Finally, the prince found the owner of the glass slipper. Cinderella and the prince got married and lived happily ever after.",
+    answer: "Resolution"
+  },
+  {
+    text: "From the story of the tortoise and the hare, we learn that arrogance will lead to failure, while perseverance will bring success.",
+    answer: "Coda"
+  },
+  {
+    text: "In a fishing village in West Sumatra, lived a poor widow with her son named Malin Kundang.",
+    answer: "Orientation"
+  },
+  {
+    text: "Malin Kundang's luxurious ship was suddenly hit by a very fierce storm, and massive waves shattered his ship into pieces.",
+    answer: "Complication"
+  },
+  {
+    text: "The mousedeer smiled cleverly because he successfully crossed the river by tricking the hungry crocodiles.",
+    answer: "Resolution"
+  },
+  {
+    text: "One dark night, Jack woke up and saw a giant beanstalk had grown through the clouds from the seeds his mother threw away.",
+    answer: "Complication"
+  },
+  {
+    text: "The moral message of this story is to never be greedy and always be grateful for what you have.",
+    answer: "Coda"
+  },
+  {
+    text: "Pinocchio finally realized his mistakes, and the blue fairy turned him into a real human boy.",
+    answer: "Resolution"
+  }
+];
+
+const quizBData = [
+  {
+    question: "Which adverb of time is the most suitable to start a narrative story (<em>Orientation</em>)?",
+    options: ["Finally", "Once upon a time", "Suddenly"],
+    answer: 1
+  },
+  {
+    question: "When a problem or a surprise suddenly appears in the story (<em>Complication</em>), the most commonly used word is...",
+    options: ["Then / Suddenly", "Long time ago", "In the end"],
+    answer: 0
+  },
+  {
+    question: "To close the story and show that the problem has been solved (<em>Resolution</em>), we can use the word...",
+    options: ["One day", "Unexpectedly", "Finally / In the end"],
+    answer: 2
+  },
+  {
+    question: "Complete the sentence: \"________, there lived a poor woodcutter in a dark forest.\"",
+    options: ["Next", "A long time ago", "Afterward"],
+    answer: 1
+  },
+  {
+    question: "Complete the sentence: \"They were walking safely. ________, they heard a very scary roar from the bushes.\"",
+    options: ["Suddenly", "Once upon a time", "To conclude"],
+    answer: 0
+  }
+];
+
+const structureParts = ["Orientation", "Complication", "Resolution", "Coda"];
+const answerA = {}; // { qIndex: selectedPart }
+const answerB = {}; // { qIndex: selectedOption }
+let starRating = 0;
+let submitted = false;
+
+// =============================================
+// RENDER QUIZ A
+// =============================================
+function renderQuizA() {
+  const container = document.getElementById('quiz-a-container');
+  quizAData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-item';
+    div.innerHTML = `
+      <div class="quiz-number">SOAL ${i + 1} / ${quizAData.length}</div>
+      <div class="quiz-text">"${q.text}"</div>
+      <div class="options-grid" id="qa-opts-${i}">
+        ${structureParts.map(part => `
+          <button class="option-btn" onclick="selectA(${i}, '${part}')">${part}</button>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function selectA(qIndex, part) {
+  if (submitted) return;
+  answerA[qIndex] = part;
+  const opts = document.querySelectorAll(`#qa-opts-${qIndex} .option-btn`);
+  opts.forEach(btn => {
+    btn.classList.toggle('selected', btn.textContent.trim() === part);
+  });
+}
+
+// =============================================
+// RENDER QUIZ B
+// =============================================
+function renderQuizB() {
+  const container = document.getElementById('quiz-b-container');
+  quizBData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'mc-item';
+    div.innerHTML = `
+      <div class="mc-question quiz-number">SOAL ${i + 1} / ${quizBData.length}</div>
+      <div class="mc-question">${q.question}</div>
+      <div class="mc-options" id="qb-opts-${i}">
+        ${q.options.map((opt, j) => `
+          <button class="mc-btn" onclick="selectB(${i}, ${j})">
+            <span class="letter">${String.fromCharCode(97 + j)}</span>
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function selectB(qIndex, optIndex) {
+  if (submitted) return;
+  answerB[qIndex] = optIndex;
+  const opts = document.querySelectorAll(`#qb-opts-${qIndex} .mc-btn`);
+  opts.forEach((btn, j) => {
+    btn.classList.toggle('selected', j === optIndex);
+  });
+}
+
+// =============================================
+// STAR RATING
+// =============================================
+function setStar(n) {
+  starRating = n;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i < n);
+  });
+  const labels = ['', 'Belum percaya diri', 'Cukup percaya diri', 'Lumayan', 'Percaya diri', 'Sangat percaya diri!'];
+  document.getElementById('star-label').textContent = labels[n];
+}
+
+// =============================================
+// SHOW ANSWERS
+// =============================================
+function showAnswers() {
+  // Quiz A
+  quizAData.forEach((q, i) => {
+    const opts = document.querySelectorAll(`#qa-opts-${i} .option-btn`);
+    opts.forEach(btn => {
+      const isCorrect = btn.textContent.trim() === q.answer;
+      const isSelected = btn.classList.contains('selected');
+      btn.classList.remove('selected');
+      if (isCorrect) btn.classList.add('correct');
+      else if (isSelected) btn.classList.add('wrong');
+    });
+  });
+
+  // Quiz B
+  quizBData.forEach((q, i) => {
+    const opts = document.querySelectorAll(`#qb-opts-${i} .mc-btn`);
+    opts.forEach((btn, j) => {
+      const isCorrect = j === q.answer;
+      const isSelected = btn.classList.contains('selected');
+      btn.classList.remove('selected');
+      if (isCorrect) btn.classList.add('correct');
+      else if (isSelected) btn.classList.add('wrong');
+    });
+  });
+}
+
+// =============================================
+// CALCULATE SCORE
+// =============================================
+function calcScore() {
+  let correct = 0;
+  quizAData.forEach((q, i) => {
+    if (answerA[i] === q.answer) correct++;
+  });
+  quizBData.forEach((q, i) => {
+    if (answerB[i] === q.answer) correct++;
+  });
+  return correct;
+}
+
+
+// =============================================
+// SUBMIT via FORMSPREE
+// =============================================
+async function submitQuiz() {
+  const name = document.getElementById('student-name').value.trim();
+  const cls = document.getElementById('student-class').value.trim();
+  const date = document.getElementById('student-date').value.trim();
+  const teacher = document.getElementById('student-teacher').value.trim();
+  const formId = document.getElementById('formspree-id').value.trim();
+
+  const statusEl = document.getElementById('status-msg');
+  statusEl.className = 'status-msg';
+
+  if (!name || !cls) {
+    statusEl.textContent = '⚠ Harap isi Nama dan Kelas sebelum mengirim.';
+    statusEl.className = 'status-msg error';
+    return;
+  }
+
+  submitted = true;
+  showAnswers();
+
+  const score = calcScore();
+  const scoreA = quizAData.filter((q, i) => answerA[i] === q.answer).length;
+  const scoreB = quizBData.filter((q, i) => answerB[i] === q.answer).length;
+
+  document.getElementById('score-number').innerHTML = `${score}<span>/15</span>`;
+  document.getElementById('score-detail').textContent =
+    `Kuis A: ${scoreA}/10 benar  ·  Kuis B: ${scoreB}/5 benar`;
+  document.getElementById('score-display').classList.add('visible');
+  document.querySelector('.submit-btn').disabled = true;
+
+  if (!formId) {
+    statusEl.textContent = '📋 Kuis selesai! Form ID Formspree belum diisi — hasil tidak terkirim. Mohon tambahkan Form ID di kolom konfigurasi.';
+    statusEl.className = 'status-msg info';
+    return;
+  }
+
+  // Build detail jawaban
+  let detailA = '';
+  quizAData.forEach((q, i) => {
+    const stu = answerA[i] || '(tidak dijawab)';
+    const status = stu === q.answer ? '✓' : '✗';
+    detailA += `${i+1}. "${q.text.substring(0, 70)}..."\n   → Jawaban: ${stu} ${status}  |  Kunci: ${q.answer}\n`;
+  });
+
+  let detailB = '';
+  quizBData.forEach((q, i) => {
+    const raw = q.question.replace(/<[^>]+>/g, '');
+    const stuIdx = answerB[i];
+    const stu = stuIdx !== undefined ? q.options[stuIdx] : '(tidak dijawab)';
+    const status = stuIdx === q.answer ? '✓' : '✗';
+    detailB += `${i+1}. ${raw.substring(0, 80)}\n   → Jawaban: ${stu} ${status}  |  Kunci: ${q.options[q.answer]}\n`;
+  });
+
+  const refleksi = [
+    document.getElementById('reflect-1').value || '-',
+    document.getElementById('reflect-2').value || '-',
+    document.getElementById('reflect-3').value || '-',
+    document.getElementById('reflect-4').value || '-',
+    `${starRating} bintang`,
+    document.getElementById('reflect-6').value || '-',
+  ];
+
+  statusEl.textContent = '📤 Mengirim hasil ke email guru...';
+  statusEl.className = 'status-msg info';
+
+  try {
+    const res = await fetch(`https://formspree.io/f/mgodkzze${formId}`, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        'Nama Siswa': name,
+        'Kelas': cls,
+        'Tanggal': date || '-',
+        'Guru Pengampu': teacher || '-',
+        'SKOR AKHIR': `${score}/15  (Kuis A: ${scoreA}/10  |  Kuis B: ${scoreB}/5)`,
+        'Detail Kuis A — Struktur Narasi': detailA,
+        'Detail Kuis B — Keterangan Waktu': detailB,
+        'Refleksi 1 — Hal baru yang dipelajari': refleksi[0],
+        'Refleksi 2 — Bagian paling sulit': refleksi[1],
+        'Refleksi 3 — Fungsi keterangan waktu': refleksi[2],
+        'Refleksi 4 — Kalimat Orientation sendiri': refleksi[3],
+        'Refleksi 5 — Tingkat kepercayaan diri': refleksi[4],
+        'Refleksi 6 — Ingin belajar lebih lanjut': refleksi[5],
+        '_subject': `[LKPD] Hasil Kuis ${name} — Kelas ${cls} — Skor ${score}/15`,
+      })
+    });
+
+    if (res.ok) {
+      statusEl.textContent = `✅ Berhasil! Hasil kuis ${name} (Skor: ${score}/15) telah dikirim ke email guru. Terima kasih!`;
+      statusEl.className = 'status-msg success';
+    } else {
+      const data = await res.json();
+      throw new Error(data?.errors?.[0]?.message || 'Respons tidak OK dari Formspree.');
+    }
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = `❌ Gagal mengirim. Periksa Form ID Formspree kamu. Error: ${err.message}`;
+    statusEl.className = 'status-msg error';
+  }
+}
+
+// INIT
+renderQuizA();
+renderQuizB();
+</script>
+</body>
+</html>
