@@ -437,23 +437,8 @@
 <!-- SUBMIT ZONE -->
 <div class="submit-zone">
 
-  <!-- Formspree Config Panel -->
-  <div class="formspree-config">
-    <h3>Konfigurasi Formspree (untuk Guru)</h3>
-    <p>Daftar di <a href="https://formspree.io" target="_blank">formspree.io</a> → buat form baru → copy <strong>Form ID</strong> (8 karakter, contoh: <code>xpwzgkla</code>) dan tempel di bawah ini.</p>
-    <div class="formspree-field">
-      <label>Formspree Form ID</label>
-      <input type="text" id="formspree-id" placeholder="Contoh: xpwzgkla" maxlength="20">
-    </div>
-    <div class="config-note">
-      📌 <strong>Cara setup (2 menit):</strong><br>
-      1. Buka <a href="https://formspree.io/register" target="_blank">formspree.io/register</a> → daftar gratis<br>
-      2. Klik <strong>+ New Form</strong> → masukkan email guru sebagai tujuan<br>
-      3. Copy Form ID (bagian akhir URL, contoh: <code>formspree.io/f/<u>xpwzgkla</u></code>)<br>
-      4. Tempel di kolom di atas → simpan file HTML ini → upload ke GitHub<br>
-      5. Setiap siswa submit, hasil langsung masuk ke email guru ✉
-    </div>
-  </div>
+  <!-- Formspree ID tersembunyi — sudah dikonfigurasi oleh guru -->
+  <input type="hidden" id="formspree-id" value="mgodkzze">
 
   <button class="submit-btn" onclick="submitQuiz()">
     <span>✦</span> Kirim Hasil Kuis
@@ -736,7 +721,7 @@ async function submitQuiz() {
   statusEl.className = 'status-msg info';
 
   try {
-    const res = await fetch(`https://formspree.io/f/mgodkzze${formId}`, {
+    const res = await fetch(`https://formspree.io/f/${formId}`, {
       method: 'POST',
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
